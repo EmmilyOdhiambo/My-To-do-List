@@ -1,92 +1,118 @@
-//Global variables
-let tasks = [];
 
-// Function to add a new task
-function addTask(event) {
-  event.preventDefault();
-  
-  const title = document.getElementById("task-title").value;
-  const dueDate = document.getElementById("due-date").value;
-  const status = document.getElementById("status").value;
-  // const taskList = document.getElementById("task-list");
-  
-  const newTask = {
-    title: title,
-    dueDate: dueDate,
-    status: status
-  };
-  
-  tasks.push(newTask);
-  displayTasks();
-  
-  // Reset the form
-  document.getElementById("task-title").value = "";
-  document.getElementById("due-date").value = "";
-  document.getElementById("status").value = "Not started";
-}
+const userContainer = document.getElementById('task-list');
 
-// Function to display tasks
-function displayTasks() {
-  const taskList = document.getElementById("task-list");
-  taskList.innerHTML = "";
-}
-  
-  tasks.forEach((task, index) => {
-    const taskItem = document.createElement("li");
-    taskItem.classList.add("task-item");
-    taskItem.innerHTML = `
-      <p>Title: ${task.title}</p>
-      <p>Due Date: ${task.dueDate}</p>
-      <p>Status: ${task.status}</p>
-      <button onclick="completeTask(${index})">Complete</button>
-      <button onclick="deleteTask(${index})">Delete</button>
-    `;
-  
-    if (task.status === "Completed") {
-      taskItem.classList.add("completed");
+const getUsers = async () => {
+  try {
+    const response = await fetch('https://dummyjson.com/todos?limit=20');
+    if (!response.ok) {
+      throw new Error('Failed to fetch users');
     }
-  })
-    
-    taskList.appendChild(taskItem);
+    const data = await response.json();
+    return data.todos;
+  } catch (error) {
+    console.log(error);
+  }
+};
 
+const displayUsers = async () => {
+  const users = await getUsers();
+  console.log(users);
+  if (Array.isArray(users)) {
+    users.forEach(item => {
+      let li = document.createElement('li');
+      let checkbox = document.createElement('input');
+      let label = document.createElement('label');
+      let deleteButton = document.createElement('button');
 
-    function completeTask(index) {
-      tasks[index].status = "Completed";
-      displayTasks();
+      li.style.display = 'flex';
+      li.style.alignItems = 'center';
+      li.style.padding = '10px';
+      li.style.border = '1px solid #ccc';
+      li.style.marginBottom = '10px';
+
+      checkbox.type = 'checkbox';
+      checkbox.checked = item.completed;
+      checkbox.style.marginRight = '10px';
+
+      label.textContent = item.todo;
+
+      deleteButton.textContent = 'X';
+      deleteButton.classList.add('delete-button');
+
+      deleteButton.addEventListener('click', () => {
+        deleteTask(item.id);
+        li.remove();
+      });
+
+      li.appendChild(checkbox);
+      li.appendChild(label);
+      li.appendChild(deleteButton);
+      userContainer.appendChild(li);
+    });
+  }
+};
+
+const deleteTask = async (taskId) => {
+  try {
+    const response = await fetch(`https://dummyjson.com/todos/${taskId}`, {
+      method: 'DELETE'
+    });
+    if (!response.ok) {
+      throw new Error('Failed to delete task');
     }
-    
-    // Function to delete a task
-    function deleteTask(index) {
-      tasks.splice(index, 1);
-      displayTasks();
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+displayUsers();
+
+const addNewTask = () => {
+  const taskInput = document.getElementById('new-task');
+  const newTask = taskInput.value.trim();
+  taskInput.value = '';
+  if (newTask) {
+    let li = document.createElement('li');
+    let checkbox = document.createElement('input');
+    let label = document.createElement('label');
+    let deleteButton = document.createElement('button');
+
+    li.style.display = 'flex';
+    li.style.alignItems = 'center';
+    li.style.padding = '10px';
+    li.style.border = '1px solid #ccc';
+    li.style.marginBottom = '10px';
+
+    checkbox.type = 'checkbox';
+    checkbox.style.marginRight = '10px';
+
+    label.textContent = newTask;
+
+    deleteButton.textContent = 'X';
+    deleteButton.classList.add('delete-button');
+
+    deleteButton.addEventListener('click', () => {
+      li.remove();
+    });
+
+    li.appendChild(checkbox);
+    li.appendChild(label);
+    li.appendChild(deleteButton);
+    userContainer.appendChild(li);
+  }
+};
+
+const clearCompletedTasks = () => {
+  const completedTasks = userContainer.querySelectorAll('li');
+  completedTasks.forEach(task => {
+    const checkbox = task.querySelector('input[type="checkbox"]');
+    if (checkbox.checked) {
+      task.remove();
     }
-    
-    // Add event listener to the form submission
-    document.getElementById("add-task-form").addEventListener("submit", addTask);
-
-
-    const fetchTasksBtn = document.getElementById("fetch-tasks-btn");
-fetchTasksBtn.addEventListener("click", function () {
-  const userId = document.getElementById("user-id").value;
-  fetchTasks(userId);
-});
-
-const todoItem = document.getElementById('Task');
-const todoText = todoItem.textContent;
-console.log(todoText);
-fetch('https://dummyjson.com/todos')
-  .then(response => response.json())
-  .then(data => console.log(data))
-  .catch(error => console.error(error));
-
-  fetch('https://dummyjson.com/todos/add', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({
-    todo: 'pray',
-    completed: false,
-    userId: 30,
-  })
+  });
+};
+addTask.addEventListener("click", function() {
+  const task = taskInput.value;
+  toDoList.innerHTML += `<p>${task}</p>`;
+  taskInput.value = "";
 })
-.then(result => result.json())
-.then(console.log);
